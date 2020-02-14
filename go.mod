@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tendermint/go-amino v0.0.0-20200130113325-59d50ef176f6
+	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
 )
 
 replace github.com/libp2p/go-libp2p-kad-dht => github.com/cc14514/go-libp2p-kad-dht v0.0.0-20191107040323-2463a62af156

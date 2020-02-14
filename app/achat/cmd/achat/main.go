@@ -1,7 +1,6 @@
 package main
 
 import (
-	"achat/libs"
 	"context"
 	"fmt"
 	"github.com/cc14514/go-alibp2p"
@@ -23,7 +22,6 @@ var DEFBOOTNODES = []string{
 var (
 	tspool                                          = alibp2p.NewAsyncRunner(context.Background(), 100, 1024)
 	tpscounter                                      = new(sync.Map)
-	Stop                                            = make(chan struct{})
 	homedir, bootnodes, capwd, leader, pwd, mailbox string
 	port, networkid, rpcport, muxport               int
 	nodiscover                                      bool
@@ -143,12 +141,15 @@ func achat(_ *cli.Context) error {
 	p2pservice = b
 	p2pservice.Start()
 	myid, _ := p2pservice.Myid()
-	chatservice = chat.NewChatService(_ctx, chat.NewJID(myid, mailbox), p2pservice).
-		AppendHandleMsg(libs.CmdMsgHandle).
-		AppendHandleMsg(libs.AppMsgHandle)
+	chatservice = chat.NewChatService(_ctx, chat.NewJID(myid, mailbox), homedir, p2pservice)
+	chatservice.AppendHandleMsg(func(service *chat.ChatService, msg *chat.Message) {
+		// log handler
+		log.Println("-->", msg)
+	})
+
 	chatservice.Start()
 	log.Println(">> Action on port =", port)
-	libs.StartRPC(pwd, rpcport, chatservice)
+	chat.StartRPC(pwd, rpcport, chatservice)
 	return nil
 }
 

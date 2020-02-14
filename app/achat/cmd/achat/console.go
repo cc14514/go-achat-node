@@ -1,88 +1,165 @@
 package main
 
 import (
-	"achat/libs"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cc14514/go-alibp2p-chat"
 	"github.com/peterh/liner"
 	"github.com/urfave/cli"
 	"golang.org/x/net/websocket"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
 
-func AttachCmd(ctx *cli.Context) error {
-	var (
-		token  string
-		rpcurl = fmt.Sprintf("ws://localhost:%d/chat", rpcport)
-	)
+type urltype string
 
-	auth := func() error {
-		ws, err := websocket.Dial(rpcurl, "", "*")
-		if err != nil {
-			return err
+const (
+	CHAT urltype = "chat"
+	RPC  urltype = "rpc"
+)
+
+var (
+	token  string
+	rpcurl = func(p urltype) string {
+		switch p {
+		case CHAT:
+			return fmt.Sprintf("ws://localhost:%d/%s", rpcport, p)
+		case RPC:
+			return fmt.Sprintf("http://localhost:%d/%s", rpcport, p)
 		}
-		defer ws.Close()
-		req := libs.NewReq(token, "auth", []string{pwd})
-		ws.Write(req.Bytes())
-		tk, err := ioutil.ReadAll(ws)
-		if err != nil {
-			return err
-		}
-		rsp, err := new(libs.Rsp).FromBytes(tk)
-		if err != nil {
-			fmt.Println("aaaaaaaaaaa", err)
-			return err
-		}
-		if rsp.Error != nil {
-			return errors.New(rsp.Error.Code + " : " + rsp.Error.Message)
-		}
-		fmt.Println(string(tk), rsp)
-		if tkarr := strings.Split(rsp.Result.(string), " "); len(tkarr) == 2 && tkarr[0] == "token" {
-			token = tkarr[1]
-			return nil
-		}
-		fmt.Println(string(tk))
-		return errors.New("error pwd req / token resp")
+		return ""
 	}
-	if err := auth(); err != nil {
+	ws        *websocket.Conn
+	Stop      = make(chan struct{})
+	reqCh     = make(chan *chat.Req)
+	Instructs = []string{
+		"opensession",
+		"close",
+		"myid",
+		"conns",
+		"exit",
+		"help",
+	}
+	help = func() string {
+		return `
+-------------------------------------------------------------------------
+# 当前 shell 支持以下指令
+-------------------------------------------------------------------------
+opensession jid 打开一个会话，聊天
+myid 获取当前节点信息
+conns 获取当前网络连接信息
+exit 退出 shell
+
+`
+	}
+)
+
+func rwLoop() {
+	// read loop
+	go func() {
+		for {
+			var j string
+			err := websocket.Message.Receive(ws, &j)
+			//fmt.Println("RL -->", err, j)
+			if err != nil {
+				log.Println("readloop-error", err)
+				return
+			}
+			msg, err := new(chat.Message).FromJson([]byte(j))
+			fmt.Println("RL ==>", err, msg)
+
+		}
+	}()
+
+	// write loop
+	go func() {
+		for {
+			select {
+			case <-Stop:
+				return
+			case req := <-reqCh:
+				rsp, err := callrpc(req)
+				fmt.Println("<--", err, rsp)
+			}
+		}
+	}()
+}
+
+func callrpc(req *chat.Req) (*chat.Rsp, error) {
+	buf := new(bytes.Buffer)
+	req.WriteTo(buf)
+	request, err := http.NewRequest("POST", rpcurl(RPC), buf)
+	if err != nil {
+		return nil, err
+	}
+	response, err := new(http.Client).Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	rtn, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := new(chat.Rsp).FromBytes(rtn)
+	if err != nil {
+		return nil, err
+	}
+	return rsp, nil
+}
+
+func auth() error {
+	rsp, err := callrpc(chat.NewReq(token, "auth", []string{pwd}))
+	if err != nil {
 		return err
 	}
-	fmt.Println(len(os.Args), os.Args, token)
-	if len(os.Args) == 3 {
-		rp, err := strconv.Atoi(os.Args[2])
-		if err == nil {
-			rpcport = rp
-		}
+	fmt.Println("---> rsp", rsp)
+	if rsp.Error != nil {
+		return errors.New(rsp.Error.Code + " : " + rsp.Error.Message)
 	}
+	if tkn := rsp.Result.(string); tkn != "" {
+		token = tkn
+		return nil
+	}
+	return errors.New("error pwd req / token resp")
+}
+
+func AttachCmd(_ *cli.Context) error {
+	err := auth()
+	if err != nil {
+		log.Println("login fail", "err", err)
+		//ws.Close()
+		return err
+	}
+	ws, err = websocket.Dial(rpcurl(CHAT), "", "*")
+	rwLoop()
+	log.Println("login success", len(os.Args), os.Args, token)
 	<-time.After(time.Second)
-	//wsC, err := websocket.Dial(fmt.Sprintf("ws://localhost:%d/cancel", rpcport), "", "*")
+	chat.NewReq(token, "open", nil).WriteTo(ws)
 	func() {
+		fmt.Println("----------------------------------")
+		fmt.Println("hello chat example, rpcport", rpcport)
+		fmt.Println("----------------------------------")
+		var (
+			targetId      = ""
+			inCh          = make(chan string)
+			history_fn    = filepath.Join(homedir, ".history")
+			line          = liner.NewLiner()
+			instructNames = Instructs
+		)
 		defer func() {
 			close(Stop)
 			if chatservice != nil {
 				chatservice.Stop()
 			}
-		}()
-		fmt.Println("----------------------------------")
-		fmt.Println("hello dshell, rpcport", rpcport)
-		fmt.Println("----------------------------------")
-		var (
-			targetId      = ""
-			ws            *websocket.Conn
-			inCh          = make(chan string)
-			history_fn    = filepath.Join(homedir, ".history")
-			line          = liner.NewLiner()
-			instructNames = libs.Instructs
-		)
-		defer func() {
+
 			if f, err := os.Create(history_fn); err != nil {
 				log.Print("Error writing history file: ", err)
 			} else {
@@ -112,23 +189,16 @@ func AttachCmd(ctx *cli.Context) error {
 		}
 
 		for {
-			label := "chat$> "
+			label := "$> "
 			if targetId != "" {
-				label = fmt.Sprintf("chat@%s$> ", targetId[len(targetId)-6:])
+				label = fmt.Sprintf("@%s$> ", targetId[len(targetId)-6:])
 			}
 			if cmd, err := line.Prompt(label); err == nil {
 				if cmd == "" {
 					continue
 				}
 				line.AppendHistory(cmd)
-				if ws != nil {
-					ws.Close()
-				}
-				ws, err = websocket.Dial(rpcurl, "", "*")
-				if err != nil {
-					fmt.Println("error", err)
-					return
-				}
+
 				cmd = strings.Trim(cmd, " ")
 				//app = app[:len([]byte(app))-1]
 				// TODO 用正则表达式拆分指令和参数
@@ -138,6 +208,8 @@ func AttachCmd(ctx *cli.Context) error {
 				case "opensession":
 					//TODO verify id must be online
 					targetId = cmdArg[1]
+				case "help":
+					fmt.Println(help())
 				case "exit":
 					if targetId != "" {
 						targetId = ""
@@ -152,23 +224,16 @@ func AttachCmd(ctx *cli.Context) error {
 							fmt.Println()
 							close(down)
 						}()
-						req := libs.NewReq(token, cmdArg[0], cmdArg[1:])
+						req := chat.NewReq(token, cmdArg[0], cmdArg[1:])
 						if targetId != "" {
-							req = libs.NewReq(token, "sendmsg", append([]string{targetId}, cmdArg[:]...))
+							req = chat.NewReq(token, "sendmsg", append([]string{targetId}, cmdArg[:]...))
 						}
 						//fmt.Println(req)
-						_, err = ws.Write(req.Bytes())
-						if err != nil {
-							fmt.Println("error", err)
-							return
+						// TODO send req
+						select {
+						case <-Stop:
+						case reqCh <- req:
 						}
-						// TODO read message
-						data, err := ioutil.ReadAll(ws)
-						if err != nil {
-							return
-						}
-						rsp, err := new(libs.Rsp).FromBytes(data)
-						fmt.Println(">>>>>>>>>>>>", err, rsp)
 					}()
 				}
 			} else if err == liner.ErrPromptAborted {

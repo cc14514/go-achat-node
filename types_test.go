@@ -2,6 +2,7 @@ package chat
 
 import (
 	"github.com/google/uuid"
+	"github.com/tendermint/go-amino"
 	"testing"
 )
 
@@ -36,10 +37,30 @@ func TestJID(t *testing.T) {
 	jid := JID("16Uiu2HAkzRux7XYhYfmTDY2C7xuBapitNp25DvKvpvVnCf9bRne716Uiu2HAkzRux7XYhYfmTDY2C7xuBapitNp25DvKvpvVnCf9bRne7")
 	t.Log(jid.Peerid())
 	t.Log(jid.Mailid())
+	buf, err := amino.MarshalBinaryLengthPrefixed(jid)
+	t.Log(err, buf)
+	var jid2 JID
+	err = amino.UnmarshalBinaryLengthPrefixed(buf, &jid2)
+	t.Log(err, jid2)
 }
 
 func TestUUID(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		t.Log(i, uuid.New().String())
 	}
+}
+
+func TestMessages(t *testing.T) {
+	msgs := []*Message{NewSysMessage("a"), NewSysMessage("b")}
+	buf, err := amino.MarshalBinaryLengthPrefixed(&MessageBag{Messages: msgs})
+	t.Log(err, buf)
+	msgs2 := new(MessageBag)
+	err = amino.UnmarshalBinaryLengthPrefixed(buf, msgs2)
+	t.Log(err, msgs2.Messages[0])
+
+	d := new(MessageBag).Bytes()
+	t.Log(d)
+	err = amino.UnmarshalBinaryLengthPrefixed(d, msgs2)
+	t.Log(err, msgs2)
+
 }

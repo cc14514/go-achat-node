@@ -5,8 +5,10 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"github.com/cc14514/go-alibp2p"
+	"github.com/google/uuid"
 	"io"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -15,6 +17,7 @@ const (
 	PID_GROUP         = "/chat/group/0.0.1"
 	PID_MAILBOX       = "/chat/mailbox/put/0.0.1"
 	PID_MAILBOX_QUERY = "/chat/mailbox/query/0.0.1"
+	PID_MAILBOX_CLEAN = "/chat/mailbox/clean/0.0.1"
 )
 
 var (
@@ -28,16 +31,21 @@ type ChatService struct {
 	p2pservice  alibp2p.Libp2pService
 	recvMsgCh   chan Msg
 	stop        chan struct{}
-	handleMsgFn []func(*ChatService, *Message)
+	handleMsgFn map[string]MsgHandle
+	lock        *sync.Mutex
+	mbox        *mailbox
 }
 
-func NewChatService(ctx context.Context, myid JID, p2pservice alibp2p.Libp2pService) *ChatService {
+func NewChatService(ctx context.Context, myid JID, homedir string, p2pservice alibp2p.Libp2pService) *ChatService {
 	return &ChatService{
-		ctx:        ctx,
-		myid:       myid,
-		p2pservice: p2pservice,
-		recvMsgCh:  make(chan Msg, 128),
-		stop:       make(chan struct{}),
+		ctx:         ctx,
+		myid:        myid,
+		p2pservice:  p2pservice,
+		recvMsgCh:   make(chan Msg, 128),
+		stop:        make(chan struct{}),
+		handleMsgFn: make(map[string]MsgHandle),
+		lock:        new(sync.Mutex),
+		mbox:        newMailbox(ctx, homedir, p2pservice),
 	}
 }
 
@@ -48,9 +56,18 @@ func (c *ChatService) GetLibp2pService() alibp2p.Libp2pService {
 	return c.p2pservice
 }
 
-func (c *ChatService) AppendHandleMsg(fn func(service *ChatService, msg *Message)) *ChatService {
-	c.handleMsgFn = append(c.handleMsgFn, fn)
-	return c
+func (c *ChatService) AppendHandleMsg(fn MsgHandle) string {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	fid := uuid.New().String()
+	c.handleMsgFn[fid] = fn
+	return fid
+}
+
+func (c *ChatService) DropHandleMsg(fid string) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	delete(c.handleMsgFn, fid)
 }
 
 func (c *ChatService) Stop() error {
@@ -76,6 +93,17 @@ func (c *ChatService) Start() error {
 			}
 		}
 	}()
+	return c.mbox.Start()
+}
+
+func (c *ChatService) QueryMsg() (*MessageBag, error) {
+	return c.mbox.QueryMsg(c.myid)
+}
+
+func (c *ChatService) CleanMsg(ids []string) error {
+	if len(ids) > 0 {
+		return c.mbox.CleanMsg(c.myid, ids)
+	}
 	return nil
 }
 
