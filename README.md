@@ -52,7 +52,7 @@ GLOBAL OPTIONS:
 
 ### HTTP
 
->用来发送给指令，完成交互，协议与 `JSONRPC` 雷同；
+>用来发送给指令，完成交互，协议与 `JSONRPC` 相同；
 >失败时统一返回如下格式的报文：
 >```
 >{
@@ -64,11 +64,12 @@ GLOBAL OPTIONS:
 >}
 >```
 
-1. auth
+#### auth
 
-认证接口，参数为节点启动时的 `--pwd` 参数对应的值，加入 pwd = 123456 则有如下交互
+认证接口，返回一个 `token` 调用其他接口时使用，建立 `websocket` 长连接时也要提供正确的 `token`，参数为节点启动时的 `--pwd` 参数对应的值，加入 pwd = 123456 则有如下交互
 
 __请求：__
+
 ```
 {
 	"id": "uuid",
@@ -86,8 +87,64 @@ __响应：__
 }
 ```
 
+#### sendmsg
 
+向指定节点 `jid` 发送 `content` 消息, 即 `params = [jid,content]`,具体如下：
+
+__请求：__
+
+```
+{
+	"id": "efda2cb1-fa4c-431a-b6c3-655aafafb1d6",
+	"token": "3fcbd15aa4556e80e46a651e84a2737214097f1c",
+	"method": "sendmsg",
+	"params": ["16Uiu2HAmN2eZ9DLJhccS1R49Qc1tpdGMdbC8uWwzUCUAfRpRvEvd", "hello"]
+}
+```
+
+__响应：__
+
+```
+{"result":"success","Id":"efda2cb1-fa4c-431a-b6c3-655aafafb1d6"}
+```
 
 ### WEBSOCKET
 
-* 客户端与节点保持长连接，用来收消息
+客户端与节点保持长连接，用来收消息
+
+当第一次打开连接时需要用如下报文发送 `token` 以完成 `openstream` 操作
+
+
+```
+{
+	"id": "8f2930d0-8e64-42d2-b2a9-e4ec6dc78f67",
+	"token": "c9074e7a1255926709f5e2b24e1ee6dbd6c34874",
+	"method": "open"
+}
+```
+
+成功时返回 
+    `envelope.type == 4` 
+    `payload.attrs[1] == {"key":"result","val":"success"}`
+失败时
+    `payload.attrs[1] == {"key":"error","val":"# error reason #"}`   
+
+```
+{
+	"envelope": {
+		"id": "2543ac95-0769-4501-a6f6-5b0df1edf031",
+		"type": "4",
+		"ct": "1581754241"
+	},
+	"payload": {
+		"attrs": [{
+			"key": "method",
+			"val": "open"
+		}, {
+			"key": "result",
+			"val": "success"
+		}]
+	},
+	"vsn": "0.0.2"
+}
+```
