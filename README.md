@@ -112,22 +112,17 @@ __响应：__
 
 客户端与节点保持长连接，用来收消息
 
-当第一次打开连接时需要用如下报文发送 `token` 以完成 `openstream` 操作
-
+当第一次打开连接时需要以如下格式来报文发送 `token` 以完成 `openstream` 操作
 
 ```
 {
 	"id": "8f2930d0-8e64-42d2-b2a9-e4ec6dc78f67",
-	"token": "c9074e7a1255926709f5e2b24e1ee6dbd6c34874",
-	"method": "open"
+	"method": "open",
+	"token": "c9074e7a1255926709f5e2b24e1ee6dbd6c34874"
 }
 ```
 
-成功时返回 
-    `envelope.type == 4` 
-    `payload.attrs[1] == {"key":"result","val":"success"}`
-失败时
-    `payload.attrs[1] == {"key":"error","val":"# error reason #"}`   
+返回
 
 ```
 {
@@ -148,3 +143,16 @@ __响应：__
 	"vsn": "0.0.2"
 }
 ```
+
+第一个返回报文的 `envelope.type == 4`, 表示 SYS 类型的消息 
+
+
+成功时 
+
+    `payload.attrs[1] == {"key":"result","val":"success"}`
+
+失败时
+
+    `payload.attrs[1] == {"key":"error","val":"# error reason #"}`,并且会关闭连接通道
+    
+
