@@ -3,9 +3,7 @@ package chat
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,9 +19,8 @@ var (
 	pwd         string
 	rpcport     int
 	tokenmap    = make(map[string]int64)
-	mfn         = map[string]func(io.Writer, *Req) error{
-		"auth": func(ws io.Writer, req *Req) error {
-			var err error
+	mfn         = map[string]func(*Req) *Rsp{
+		"auth": func(req *Req) *Rsp {
 			if pwd == "" || (len(req.Params) == 1 && req.Params[0] == pwd) {
 				s := sha1.New()
 				now := time.Now()
@@ -31,31 +28,58 @@ var (
 				h := s.Sum(nil)
 				token := hex.EncodeToString(h)
 				tokenmap[token] = now.Unix()
-				NewRsp(req.Id, token, nil).WriteTo(ws)
+				return NewRsp(req.Id, token, nil)
 			} else {
-				err = errors.New("auth_fail")
-				NewRsp(req.Id, nil, &RspError{
+				return NewRsp(req.Id, nil, &RspError{
 					Code:    "1002",
-					Message: err.Error(),
-				}).WriteTo(ws)
+					Message: "auth_fail",
+				})
 			}
-			return err
 		},
 
-		"sendmsg": func(ws io.Writer, req *Req) error {
+		"sendmsg": func(req *Req) *Rsp {
 			to := req.Params[0]
 			content := strings.Join(req.Params[1:], " ")
 			msg := NewNormalMessage(chatservice.GetMyid(), JID(to), content)
 			if err := chatservice.SendMsg(msg); err != nil {
-				NewRsp(req.Id, nil, &RspError{
+				return NewRsp(req.Id, nil, &RspError{
 					Code:    "1003",
 					Message: err.Error(),
-				}).WriteTo(ws)
-				return err
+				})
 			} else {
-				NewRsp(req.Id, "success", nil).WriteTo(ws)
+				return NewRsp(req.Id, "success", nil)
 			}
-			return nil
+		},
+
+		"myid": func(req *Req) *Rsp { return NewRsp(req.Id, chatservice.myid, nil) },
+
+		"conns": func(req *Req) *Rsp {
+			p2pservice := chatservice.p2pservice
+			s := time.Now()
+			direct, relay, total := p2pservice.Peers()
+			dpis := make([]peerinfo, 0)
+			for _, id := range direct {
+				if addrs, err := p2pservice.Findpeer(id); err == nil {
+					dpis = append(dpis, peerinfo{id, addrs})
+				}
+			}
+			rpis := make(map[string][]peerinfo)
+			for rid, ids := range relay {
+				pis := make([]peerinfo, 0)
+				for _, id := range ids {
+					if addrs, err := p2pservice.Findpeer(id); err == nil {
+						pis = append(pis, peerinfo{id, addrs})
+					}
+				}
+				rpis[rid] = pis
+			}
+			entity := struct {
+				TimeUsed string
+				Total    int
+				Direct   []peerinfo
+				Relay    map[string][]peerinfo
+			}{time.Since(s).String(), total, dpis, rpis}
+			return NewRsp(req.Id, entity, nil)
 		},
 	}
 )
@@ -76,7 +100,7 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
 					Message: "error token , please relogin .",
 				}).WriteTo(w)
 			}
-			fn(w, req)
+			fn(req).WriteTo(w)
 		} else {
 			NewRsp(req.Id, nil, &RspError{
 				Code:    "1003",
@@ -96,16 +120,14 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
 		req := new(Req).FromBytes([]byte(in))
 		_, ok := tokenmap[req.Token]
 		if !ok {
-			NewRsp(req.Id, nil, &RspError{Code: "1003", Message: "error_token"}).WriteTo(ws)
+			ws.Write(NewSysMessage("",
+				Attr{Key: "method", Val: req.Method},
+				Attr{Key: "error", Val: "error_token"}).Json())
 			return
 		}
-		ws.Write(NewSysMessage("", Attr{
-			Key: "method",
-			Val: req.Method,
-		}, Attr{
-			Key: "result",
-			Val: "success",
-		}).Json())
+		ws.Write(NewSysMessage("",
+			Attr{Key: "method", Val: req.Method},
+			Attr{Key: "result", Val: "success"}).Json())
 		if ml, err := chatservice.QueryMsg(); err == nil {
 			ids := make([]string, 0)
 			for _, m := range ml.Messages {

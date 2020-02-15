@@ -67,7 +67,7 @@ func rwLoop() {
 		for {
 			var j string
 			err := websocket.Message.Receive(ws, &j)
-			//fmt.Println("RL -->", err, j)
+			fmt.Println("RL -->", err, j)
 			if err != nil {
 				log.Println("readloop-error", err)
 				return
@@ -216,6 +216,23 @@ func AttachCmd(_ *cli.Context) error {
 					} else {
 						fmt.Println("bye bye ^_^ ")
 						return
+					}
+				case "myid", "conns":
+					rsp, err := callrpc(chat.NewReq(token, cmdArg[0], nil))
+					if err != nil {
+						fmt.Println("error:", err)
+					} else if rsp.Error != nil {
+						fmt.Println("error:", rsp.Error.Code, rsp.Error.Message)
+					} else {
+						_, ok := rsp.Result.(string)
+						if ok {
+							fmt.Println(rsp.Result)
+						} else {
+							j, _ := json.Marshal(rsp.Result)
+							d, _ := jshow(j)
+							fmt.Println(string(d))
+						}
+
 					}
 				default:
 					down := make(chan struct{})

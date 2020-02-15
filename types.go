@@ -244,13 +244,18 @@ type (
 	Rsp struct {
 		Result interface{} `json:"result,omitempty"`
 		Error  *RspError   `json:"error,omitempty"`
-		Id     string
+		Id     string      `json:"id,omitempty"`
 	}
 
 	RspMessage struct {
 		Result *Message  `json:"result,omitempty"`
 		Error  *RspError `json:"error,omitempty"`
-		Id     string
+		Id     string    `json:"id,omitempty"`
+	}
+
+	peerinfo struct {
+		ID    string
+		Addrs []string
 	}
 )
 
