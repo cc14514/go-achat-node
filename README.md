@@ -156,3 +156,20 @@ __响应：__
     `payload.attrs[1] == {"key":"error","val":"# error reason #"}`,并且会关闭连接通道
     
 
+当 `open stream` 成功了以后，这个长连接通道上就会得到如下格式的聊天消息
+
+```
+{
+	"envelope": {
+		"id": "465e1f04-99f7-442b-bac5-da33aa7e7caa",
+		"from": "16Uiu2HAmN2eZ9DLJhccS1R49Qc1tpdGMdbC8uWwzUCUAfRpRvEvd",
+		"to": "16Uiu2HAkvsWx5Byt8RCXs2ScrmPCZteHjcdQhzxdHCVYTjtYxPYr",
+		"type": "1",
+		"ct": "1581756469"
+	},
+	"payload": {
+		"content": "hello world"
+	},
+	"vsn": "0.0.2"
+}
+```
