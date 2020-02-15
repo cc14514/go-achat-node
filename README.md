@@ -1,37 +1,37 @@
 # go-alibp2p-chat
 
 #### 介绍
-社交 Dapp Library
-
-#### 软件架构
-软件架构说明
-
-
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
+社交 Dapp Lib
 
 #### 使用说明
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+```
+$> achat --help
+NAME:
+   achat - 基于 go-alibp2p 的 chat
 
-#### 参与贡献
+USAGE:
+   achat [global options] command [command options] [arguments...]
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+VERSION:
+   0.0.1
 
+AUTHOR:
+   liangc <cc14514@icloud.com>
 
-#### 码云特技
+COMMANDS:
+   attach   attach to console
+   console  start with console
+   help, h  Shows a list of commands or help for one command
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5.  码云官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+GLOBAL OPTIONS:
+   --rpcport PORT             RPC server listening PORT (default: 9990)
+   --port value               service tcp port (default: 24000)
+   --networkid value          network id (default: 1)
+   --homedir value, -d value  home dir (default: "/tmp")
+   --pwd value                passwd for subcmd attach
+   --mailbox value            recv offline message
+   --bootnodes value          bootnode list split by ','
+   --help, -h                 show help
+   --version, -v              print the version
+```
