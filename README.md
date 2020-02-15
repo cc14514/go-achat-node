@@ -45,3 +45,49 @@ GLOBAL OPTIONS:
 
 子命令 `console` 可以在调试时得到一个 `shell` ，也可以单独启动节点进程并以 `attach` 子命令登陆节点 `shell` 进行交互
 
+
+## RPC接口
+
+节点提供 `http` 和 `websocket` 两种接口
+
+### HTTP
+
+>用来发送给指令，完成交互，协议与 `JSONRPC` 雷同；
+>失败时统一返回如下格式的报文：
+>```
+>{
+>	"id": "req-uuid",
+>	"error": {
+>		"code": "xxxx",
+>		"message": "xxxx"
+>	}
+>}
+>```
+
+1. auth
+
+认证接口，参数为节点启动时的 `--pwd` 参数对应的值，加入 pwd = 123456 则有如下交互
+
+__请求：__
+```
+{
+	"id": "uuid",
+	"method": "auth",
+	"params": ["123456"]
+}
+```
+
+__响应：__
+
+```
+{
+	"id": "uuid",
+	"result": "1193c3a40299a61192c062f937ff4d531e3e3629"
+}
+```
+
+
+
+### WEBSOCKET
+
+* 客户端与节点保持长连接，用来收消息
