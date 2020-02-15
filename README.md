@@ -39,5 +39,9 @@ GLOBAL OPTIONS:
 
 > 开发和调试时如果是本地单节点运行，则只关心 `--pwd` 和 `--mailbox` 两个参数即可，一个用于给 `rpc` 通道加密，另一个用于指定 `mailbox` 节点 `id` 来收离线消息
 >
-> 例如 : 
->    achat --mailbox 16Uiu2HAm91Fc9psqiTTiEpDEPqxc8cLqj4fhjUqPK6LwGZvLKx3j console
+>    例如 : 
+>
+>        achat --mailbox 16Uiu2HAm91Fc9psqiTTiEpDEPqxc8cLqj4fhjUqPK6LwGZvLKx3j console
+
+子命令 `console` 可以在调试时得到一个 `shell` ，也可以单独启动节点进程并以 `attach` 子命令登陆节点 `shell` 进行交互
+
