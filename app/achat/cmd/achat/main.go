@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cc14514/go-alibp2p"
 	chat "github.com/cc14514/go-alibp2p-chat"
+	"github.com/cc14514/go-alibp2p-chat/rpc"
 	"github.com/urfave/cli"
 	"log"
 	"math/big"
@@ -149,7 +150,7 @@ func achat(_ *cli.Context) error {
 
 	chatservice.Start()
 	log.Println(">> Action on port =", port)
-	chat.StartRPC(pwd, rpcport, chatservice)
+	rpc.StartRPC(pwd, rpcport, chatservice)
 	return nil
 }
 

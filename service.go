@@ -27,6 +27,7 @@ var (
 
 type ChatService struct {
 	myid        JID // self id
+	homedir     string
 	ctx         context.Context
 	p2pservice  alibp2p.Libp2pService
 	recvMsgCh   chan Msg
@@ -40,6 +41,7 @@ func NewChatService(ctx context.Context, myid JID, homedir string, p2pservice al
 	return &ChatService{
 		ctx:         ctx,
 		myid:        myid,
+		homedir:     homedir,
 		p2pservice:  p2pservice,
 		recvMsgCh:   make(chan Msg, 128),
 		stop:        make(chan struct{}),
@@ -47,6 +49,10 @@ func NewChatService(ctx context.Context, myid JID, homedir string, p2pservice al
 		lock:        new(sync.Mutex),
 		mbox:        newMailbox(ctx, homedir, p2pservice),
 	}
+}
+
+func (c *ChatService) GetHomedir() string {
+	return c.homedir
 }
 
 func (c *ChatService) GetMyid() JID {

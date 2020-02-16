@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cc14514/go-alibp2p-chat"
+	"github.com/cc14514/go-alibp2p-chat/rpc"
 	"github.com/peterh/liner"
 	"github.com/urfave/cli"
 	"golang.org/x/net/websocket"
@@ -38,7 +39,7 @@ var (
 	}
 	ws        *websocket.Conn
 	Stop      = make(chan struct{})
-	reqCh     = make(chan *chat.Req)
+	reqCh     = make(chan *rpc.Req)
 	Instructs = []string{
 		"opensession",
 		"close",
@@ -47,6 +48,7 @@ var (
 		"exit",
 		"help",
 	}
+
 	help = func() string {
 		return `
 -------------------------------------------------------------------------
@@ -92,7 +94,7 @@ func rwLoop() {
 	}()
 }
 
-func callrpc(req *chat.Req) (*chat.Rsp, error) {
+func callrpc(req *rpc.Req) (*rpc.Rsp, error) {
 	buf := new(bytes.Buffer)
 	req.WriteTo(buf)
 	request, err := http.NewRequest("POST", rpcurl(RPC), buf)
@@ -108,7 +110,7 @@ func callrpc(req *chat.Req) (*chat.Rsp, error) {
 	if err != nil {
 		return nil, err
 	}
-	rsp, err := new(chat.Rsp).FromBytes(rtn)
+	rsp, err := new(rpc.Rsp).FromBytes(rtn)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +118,7 @@ func callrpc(req *chat.Req) (*chat.Rsp, error) {
 }
 
 func auth() error {
-	rsp, err := callrpc(chat.NewReq(token, "auth", []string{pwd}))
+	rsp, err := callrpc(rpc.NewReq(token, "auth", []interface{}{pwd}))
 	if err != nil {
 		return err
 	}
@@ -142,7 +144,7 @@ func AttachCmd(_ *cli.Context) error {
 	rwLoop()
 	log.Println("login success", len(os.Args), os.Args, token)
 	<-time.After(time.Second)
-	chat.NewReq(token, "open", nil).WriteTo(ws)
+	rpc.NewReq(token, "open", nil).WriteTo(ws)
 	func() {
 		fmt.Println("----------------------------------")
 		fmt.Println("hello chat example, rpcport", rpcport)
@@ -218,7 +220,7 @@ func AttachCmd(_ *cli.Context) error {
 						return
 					}
 				case "myid", "conns":
-					rsp, err := callrpc(chat.NewReq(token, cmdArg[0], nil))
+					rsp, err := callrpc(rpc.NewReq(token, cmdArg[0], nil))
 					if err != nil {
 						fmt.Println("error:", err)
 					} else if rsp.Error != nil {
@@ -241,9 +243,9 @@ func AttachCmd(_ *cli.Context) error {
 							fmt.Println()
 							close(down)
 						}()
-						req := chat.NewReq(token, cmdArg[0], cmdArg[1:])
+						req := rpc.NewReq(token, cmdArg[0], rpc.Str2X(cmdArg[1:]))
 						if targetId != "" {
-							req = chat.NewReq(token, "sendmsg", append([]string{targetId}, cmdArg[:]...))
+							req = rpc.NewReq(token, "sendmsg", append([]interface{}{targetId}, rpc.Str2X(cmdArg[:])...))
 						}
 						//fmt.Println(req)
 						// TODO send req

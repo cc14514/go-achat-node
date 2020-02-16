@@ -1,9 +1,11 @@
-package chat
+package rpc
 
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"github.com/cc14514/go-alibp2p-chat"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,11 +17,26 @@ import (
 )
 
 var (
-	chatservice *ChatService
+	chatservice *chat.ChatService
 	pwd         string
 	rpcport     int
 	tokenmap    = make(map[string]int64)
-	mfn         = map[string]func(*Req) *Rsp{
+	servicemap  = make(map[string]Service)
+	serviceReg  = func(s Service) {
+		servicemap[s.APIs().Namespace] = s
+	}
+	getRpcFn = func(method string) RpcFn {
+		args := strings.Split(method, "_")
+		if len(args) != 2 {
+			return nil
+		}
+		ns, fn := args[0], args[1]
+		if s, ok := servicemap[ns]; ok {
+			return s.APIs().Api[fn]
+		}
+		return nil
+	}
+	fnReg = map[string]RpcFn{
 		"auth": func(req *Req) *Rsp {
 			if pwd == "" || (len(req.Params) == 1 && req.Params[0] == pwd) {
 				s := sha1.New()
@@ -39,36 +56,37 @@ var (
 
 		"sendmsg": func(req *Req) *Rsp {
 			to := req.Params[0]
-			content := strings.Join(req.Params[1:], " ")
-			msg := NewNormalMessage(chatservice.GetMyid(), JID(to), content)
+			c, err := X2Str(req.Params[1:])
+			if err != nil {
+				return NewRsp(req.Id, nil, &RspError{Code: "1003", Message: err.Error()})
+			}
+			content := strings.Join(c, " ")
+			msg := chat.NewNormalMessage(chatservice.GetMyid(), chat.JID(to.(string)), content)
 			if err := chatservice.SendMsg(msg); err != nil {
-				return NewRsp(req.Id, nil, &RspError{
-					Code:    "1003",
-					Message: err.Error(),
-				})
+				return NewRsp(req.Id, nil, &RspError{Code: "1003", Message: err.Error()})
 			} else {
 				return NewRsp(req.Id, "success", nil)
 			}
 		},
 
-		"myid": func(req *Req) *Rsp { return NewRsp(req.Id, chatservice.myid, nil) },
+		"myid": func(req *Req) *Rsp { return NewRsp(req.Id, chatservice.GetMyid(), nil) },
 
 		"conns": func(req *Req) *Rsp {
-			p2pservice := chatservice.p2pservice
+			p2pservice := chatservice.GetLibp2pService()
 			s := time.Now()
 			direct, relay, total := p2pservice.Peers()
-			dpis := make([]peerinfo, 0)
+			dpis := make([]Peerinfo, 0)
 			for _, id := range direct {
 				if addrs, err := p2pservice.Findpeer(id); err == nil {
-					dpis = append(dpis, peerinfo{id, addrs})
+					dpis = append(dpis, Peerinfo{id, addrs})
 				}
 			}
-			rpis := make(map[string][]peerinfo)
+			rpis := make(map[string][]Peerinfo)
 			for rid, ids := range relay {
-				pis := make([]peerinfo, 0)
+				pis := make([]Peerinfo, 0)
 				for _, id := range ids {
 					if addrs, err := p2pservice.Findpeer(id); err == nil {
-						pis = append(pis, peerinfo{id, addrs})
+						pis = append(pis, Peerinfo{id, addrs})
 					}
 				}
 				rpis[rid] = pis
@@ -76,15 +94,38 @@ var (
 			entity := struct {
 				TimeUsed string
 				Total    int
-				Direct   []peerinfo
-				Relay    map[string][]peerinfo
+				Direct   []Peerinfo
+				Relay    map[string][]Peerinfo
 			}{time.Since(s).String(), total, dpis, rpis}
 			return NewRsp(req.Id, entity, nil)
 		},
 	}
+
+	X2Str = func(il []interface{}) ([]string, error) {
+		r := make([]string, 0)
+		for _, s := range il {
+			i, ok := s.(string)
+			if !ok {
+				return nil, errors.New("item not str")
+			}
+			r = append(r, i)
+		}
+		return r, nil
+	}
+	Str2X = func(sl []string) []interface{} {
+		r := make([]interface{}, 0)
+		for _, s := range sl {
+			r = append(r, s)
+		}
+		return r
+	}
 )
 
-func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
+func startService() {
+	serviceReg(NewUserService(chatservice))
+}
+
+func StartRPC(_pwd string, _rpcport int, _chatservice *chat.ChatService) {
 	chatservice, pwd, rpcport = _chatservice, _pwd, _rpcport
 	http.HandleFunc("/rpc", func(w http.ResponseWriter, r *http.Request) {
 		data, err := ioutil.ReadAll(r.Body)
@@ -93,7 +134,7 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
 			return
 		}
 		req := new(Req).FromBytes(data)
-		if fn, ok := mfn[req.Method]; ok {
+		if fn, ok := fnReg[req.Method]; ok {
 			if req.Method != "auth" && tokenmap[req.Token] <= 0 {
 				NewRsp(req.Id, nil, &RspError{
 					Code:    "1001",
@@ -102,10 +143,14 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
 			}
 			fn(req).WriteTo(w)
 		} else {
-			NewRsp(req.Id, nil, &RspError{
-				Code:    "1003",
-				Message: "method_not_support",
-			}).WriteTo(w)
+			if _fn := getRpcFn(req.Method); _fn != nil {
+				_fn(req).WriteTo(w)
+			} else {
+				NewRsp(req.Id, nil, &RspError{
+					Code:    "1003",
+					Message: "method_not_support",
+				}).WriteTo(w)
+			}
 		}
 	})
 
@@ -120,14 +165,14 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
 		req := new(Req).FromBytes([]byte(in))
 		_, ok := tokenmap[req.Token]
 		if !ok {
-			ws.Write(NewSysMessage("",
-				Attr{Key: "method", Val: req.Method},
-				Attr{Key: "error", Val: "error_token"}).Json())
+			ws.Write(chat.NewSysMessage("",
+				chat.Attr{Key: "method", Val: req.Method},
+				chat.Attr{Key: "error", Val: "error_token"}).Json())
 			return
 		}
-		ws.Write(NewSysMessage("",
-			Attr{Key: "method", Val: req.Method},
-			Attr{Key: "result", Val: "success"}).Json())
+		ws.Write(chat.NewSysMessage("",
+			chat.Attr{Key: "method", Val: req.Method},
+			chat.Attr{Key: "result", Val: "success"}).Json())
 		if ml, err := chatservice.QueryMsg(); err == nil {
 			ids := make([]string, 0)
 			for _, m := range ml.Messages {
@@ -136,7 +181,7 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
 			}
 			chatservice.CleanMsg(ids)
 		}
-		fid := chatservice.AppendHandleMsg(func(service *ChatService, msg *Message) {
+		fid := chatservice.AppendHandleMsg(func(service *chat.ChatService, msg *chat.Message) {
 			ws.Write(msg.Json())
 		})
 		defer chatservice.DropHandleMsg(fid)
@@ -147,6 +192,7 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *ChatService) {
 			log.Println("==ws==>", in)
 		}
 	}))
+	startService()
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", rpcport), nil); err != nil {
 		log.Println("listen_error", "err", err)
 		os.Exit(1)

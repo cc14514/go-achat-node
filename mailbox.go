@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"errors"
@@ -13,13 +12,6 @@ import (
 	"path"
 	"sort"
 )
-
-var kfilter = func(prefix, k []byte) bool {
-	if k != nil && len(k) > len(prefix) {
-		return bytes.Equal(k[:len(prefix)], prefix)
-	}
-	return false
-}
 
 type mailbox struct {
 	ctx        context.Context
@@ -67,7 +59,7 @@ func (m *mailbox) doQueryMsg(jid JID) *MessageBag {
 	it := tab.NewIterator()
 	sl := make([]*Message, 0)
 	for it.Next() {
-		if kfilter([]byte(id), it.Key()) {
+		if ldb.Kfilter([]byte(id), it.Key()) {
 			if m, err := new(Message).FromBytes(it.Value()); err == nil {
 				sl = append(sl, m.(*Message))
 			}

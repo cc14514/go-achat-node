@@ -17,6 +17,7 @@
 package ldb
 
 import (
+	"bytes"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/filter"
@@ -62,6 +63,13 @@ func NewLDBDatabase(file string, cache int, handles int) (*LDBDatabase, error) {
 		fn: file,
 		db: db,
 	}, nil
+}
+
+var Kfilter = func(prefix, k []byte) bool {
+	if k != nil && len(k) > len(prefix) {
+		return bytes.Equal(k[:len(prefix)], prefix)
+	}
+	return false
 }
 
 // Path returns the path to the database directory.
