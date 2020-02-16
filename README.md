@@ -90,6 +90,23 @@ __响应：__
 }
 ```
 
+#### myid
+
+获取自己的 jid 以方便设置用户信息，或者跟好友交换 jid
+
+__请求：__
+
+```
+{"token":"57b2afa268acd805ff8055f6588fb7e2f6927008","method":"myid"}
+```
+
+__响应：__
+
+```
+{"result":"16Uiu2HAkvsWx5Byt8RCXs2ScrmPCZteHjcdQhzxdHCVYTjtYxPYr"}
+```
+
+
 #### sendmsg
 
 向指定节点 `jid` 发送 `content` 消息, 即 `params = [jid,content]`,具体如下：
