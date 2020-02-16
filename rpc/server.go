@@ -134,23 +134,20 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *chat.ChatService) {
 			return
 		}
 		req := new(Req).FromBytes(data)
-		if fn, ok := fnReg[req.Method]; ok {
-			if req.Method != "auth" && tokenmap[req.Token] <= 0 {
-				NewRsp(req.Id, nil, &RspError{
-					Code:    "1001",
-					Message: "error token , please relogin .",
-				}).WriteTo(w)
-			}
+		if req.Method != "auth" && tokenmap[req.Token] <= 0 {
+			NewRsp(req.Id, nil, &RspError{
+				Code:    "1001",
+				Message: "error token , please relogin .",
+			}).WriteTo(w)
+		} else if fn, ok := fnReg[req.Method]; ok {
 			fn(req).WriteTo(w)
+		} else if _fn := getRpcFn(req.Method); _fn != nil {
+			_fn(req).WriteTo(w)
 		} else {
-			if _fn := getRpcFn(req.Method); _fn != nil {
-				_fn(req).WriteTo(w)
-			} else {
-				NewRsp(req.Id, nil, &RspError{
-					Code:    "1003",
-					Message: "method_not_support",
-				}).WriteTo(w)
-			}
+			NewRsp(req.Id, nil, &RspError{
+				Code:    "1003",
+				Message: "method_not_support",
+			}).WriteTo(w)
 		}
 	})
 
