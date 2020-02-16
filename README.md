@@ -48,7 +48,10 @@ GLOBAL OPTIONS:
 
 ## RPC接口
 
-节点提供 `http` 和 `websocket` 两种接口
+节点提供 `http`(只接收 post 请求) 和 `websocket` 两种接口，URL如下：
+
+* http://localhost:[rpcport]/rpc 
+* ws://localhost:[rpcport]/chat
 
 ### HTTP
 
@@ -107,6 +110,124 @@ __响应：__
 ```
 {"result":"success","Id":"efda2cb1-fa4c-431a-b6c3-655aafafb1d6"}
 ```
+
+#### user
+
+> 用户接口用来对用户信息进行增删改查，用户信息包含如下属性
+>```
+>{
+>	"id": "用户JID",
+>	"name": "用户名",
+>	"comment": "备注",
+>	"gender": 1 // 性别：0 女，1 男
+>}
+>```
+>
+> 提供如下操作：
+>
+> * user_put : 添加用户信息，可以用于修改 `自己` 的用户信息或者添加 `好友` 信息
+> * user_get : 根据 user.id 获取用户信息
+> * user_del : 根据 user.id 来删除用户信息
+> * user_query : 获取全部用户信息
+
+##### user_put
+
+__请求：__
+
+```
+{
+	"id": "b1b09207-b92a-410f-9aaf-bc486bb1565f",
+	"token": "e379f924be7548b43c2f2273db9549e47c752872",
+	"method": "user_put",
+	"params": [{
+		"comment": "测试账户",
+		"gender": "1",
+		"id": "16Uiu2HAmN2eZ9DLJhccS1R49Qc1tpdGMdbC8uWwzUCUAfRpRvEvd",
+		"name": "test1"
+	}]
+}
+```
+
+__响应：__
+
+```
+{"result":"success","id":"b1b09207-b92a-410f-9aaf-bc486bb1565f"}
+```
+
+
+##### user_get
+
+__请求：__
+
+```
+{
+	"id": "b1b01749-c113-45b1-aa86-2b1461ab4bd3",
+	"token": "e379f924be7548b43c2f2273db9549e47c752872",
+	"method": "user_get",
+	"params": ["16Uiu2HAmN2eZ9DLJhccS1R49Qc1tpdGMdbC8uWwzUCUAfRpRvEvd"]
+}
+```
+
+__响应：__
+
+```
+{
+	"result": {
+		"id": "16Uiu2HAmN2eZ9DLJhccS1R49Qc1tpdGMdbC8uWwzUCUAfRpRvEvd",
+		"name": "test1",
+		"gender": 1,
+		"comment": "测试账户"
+	},
+	"id": "b1b01749-c113-45b1-aa86-2b1461ab4bd3"
+}
+```
+
+##### user_del
+
+__请求：__
+
+```
+{
+	"id": "b1b01749-c113-45b1-aa86-2b1461ab4bd3",
+	"token": "e379f924be7548b43c2f2273db9549e47c752872",
+	"method": "user_del",
+	"params": ["16Uiu2HAmN2eZ9DLJhccS1R49Qc1tpdGMdbC8uWwzUCUAfRpRvEvd"]
+}
+```
+
+__响应：__
+
+```
+{"result":"success","id":"b1b09207-b92a-410f-9aaf-bc486bb1565f"}
+```
+
+
+##### user_query
+
+__请求：__
+
+```
+{
+	"id": "a2430ddb-16f2-49e1-99ca-6589dff93750",
+	"token": "e379f924be7548b43c2f2273db9549e47c752872",
+	"method": "user_query"
+}
+```
+
+__响应：__
+
+```
+{
+	"result": [{
+		"id": "16Uiu2HAmN2eZ9DLJhccS1R49Qc1tpdGMdbC8uWwzUCUAfRpRvEvd",
+		"name": "test1",
+		"gender": 1,
+		"comment": "测试账户"
+	}],
+	"id": "a2430ddb-16f2-49e1-99ca-6589dff93750"
+}
+```
+
 
 ### WEBSOCKET
 
