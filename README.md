@@ -48,7 +48,13 @@ GLOBAL OPTIONS:
 
 ## RPC接口
 
-节点提供 `http` 和 `websocket` 两种接口
+节点提供 `http` 和 `websocket` 两种接口，URL如下：
+
+* http 接口，接收 post 请求
+    endpoint : http://localhost:[rpcport]/rpc 
+
+* websocket 接口
+    endpoint : ws://localhost:[rpcport]/chat
 
 ### HTTP
 
