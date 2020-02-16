@@ -97,13 +97,20 @@ __响应：__
 __请求：__
 
 ```
-{"token":"57b2afa268acd805ff8055f6588fb7e2f6927008","method":"myid"}
+{
+    "id":"59b9ec6f-e9d8-4fa0-8edb-8019433c241d",
+    "token":"7165520702945c71b4348e85564f3a3459142cdf",
+    "method":"myid"
+}
 ```
 
 __响应：__
 
 ```
-{"result":"16Uiu2HAkvsWx5Byt8RCXs2ScrmPCZteHjcdQhzxdHCVYTjtYxPYr"}
+{
+    "result":"16Uiu2HAkvsWx5Byt8RCXs2ScrmPCZteHjcdQhzxdHCVYTjtYxPYr","
+    id":"59b9ec6f-e9d8-4fa0-8edb-8019433c241d"
+}
 ```
 
 
