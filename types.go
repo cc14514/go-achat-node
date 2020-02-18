@@ -69,7 +69,8 @@ type (
 	MsgHandle func(service *ChatService, msg *Message)
 
 	MsgType  int
-	JID      string
+	JID      string // jid = "peerid + mailboxid" , 其中 mailboxid 可选
+	GID      string // gid = "groupid + mailboxid"
 	Envelope struct {
 		Id   string  `json:"id,omitempty"`
 		From JID     `json:"from,omitempty"`
@@ -77,7 +78,7 @@ type (
 		Type MsgType `json:"type"`
 		Ack  byte    `json:"ack,omitempty"`
 		Ct   int64   `json:"ct,omitempty"`
-		Gid  JID     `json:"gid,omitempty"`
+		Gid  JID `json:"gid,omitempty"`
 	}
 	Attr struct {
 		Key string `json:"key"`

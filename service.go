@@ -18,6 +18,7 @@ const (
 	PID_MAILBOX       = "/chat/mailbox/put/0.0.1"
 	PID_MAILBOX_QUERY = "/chat/mailbox/query/0.0.1"
 	PID_MAILBOX_CLEAN = "/chat/mailbox/clean/0.0.1"
+	PID_MAILBOX_GROUP = "/chat/mailbox/group/0.0.1"
 )
 
 var (

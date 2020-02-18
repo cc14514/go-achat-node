@@ -1,12 +1,15 @@
 package rpc
 
 import (
+	"bytes"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	chat "github.com/cc14514/go-alibp2p-chat"
 	"github.com/google/uuid"
 	"github.com/tendermint/go-amino"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -50,15 +53,49 @@ type (
 		Addrs []string
 	}
 
+	Member struct {
+		Id   chat.JID `json:"id,omitempty"`
+		Name string   `json:"name,omitempty"`
+	}
+
+	Members []*Member
+
 	User struct {
+		// member info ----------------------------------
 		Id      chat.JID `json:"id,omitempty"`
 		Name    string   `json:"name,omitempty"`
 		Age     int      `json:"age,omitempty"`
 		Gender  int      `json:"gender,omitempty"`
 		Icon    []byte   `json:"icon,omitempty"`
 		Comment string   `json:"comment,omitempty"`
+		// group info ----------------------------------
+		IsGroup      bool     `json:"isGroup,omitempty"`
+		GroupRoot    []byte   `json:"groupRoot,omitempty"`
+		GroupOwner   chat.JID `json:"groupOwner,omitempty"`
+		GroupMembers Members  `json:"groupMembers,omitempty"`
 	}
 )
+
+func (m Members) RootHash() []byte {
+	sort.Sort(m)
+	s1 := sha1.New()
+	for _, itm := range m {
+		s1.Write([]byte(itm.Id))
+	}
+	return s1.Sum(nil)
+}
+
+func (m Members) Len() int {
+	return len(m)
+}
+
+func (m Members) Less(i, j int) bool {
+	return bytes.Compare([]byte(m[i].Id), []byte(m[j].Id)) < 0
+}
+
+func (m Members) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
 
 func (c *User) FromJson(data []byte) (*User, error) {
 	err := amino.UnmarshalJSON(data, c)

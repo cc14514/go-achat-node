@@ -13,6 +13,7 @@ import (
 	"sort"
 )
 
+// TODO 映射绑定关系即 jid + mailboxid ，接受指令时要验证 jid
 type mailbox struct {
 	ctx        context.Context
 	stop       chan struct{}
