@@ -128,6 +128,9 @@ func startService() {
 func StartRPC(_pwd string, _rpcport int, _chatservice *chat.ChatService) {
 	chatservice, pwd, rpcport = _chatservice, _pwd, _rpcport
 	http.HandleFunc("/rpc", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") //允许访问所有域
+		w.Header().Set("content-type", "application/json") //返回数据格式是json
+
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Println("ws_error", "err", err)
@@ -152,6 +155,7 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *chat.ChatService) {
 	})
 
 	http.Handle("/chat", websocket.Handler(func(ws *websocket.Conn) {
+
 		defer ws.Close()
 		var err error
 		var in string
@@ -190,7 +194,7 @@ func StartRPC(_pwd string, _rpcport int, _chatservice *chat.ChatService) {
 		}
 	}))
 	startService()
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", rpcport), nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", rpcport), nil); err != nil {
 		log.Println("listen_error", "err", err)
 		os.Exit(1)
 	}
