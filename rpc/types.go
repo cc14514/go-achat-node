@@ -61,22 +61,24 @@ type (
 	Members []*Member
 
 	User struct {
-		// member info ----------------------------------
+		// common info
 		Id      chat.JID `json:"id,omitempty"`
+		Gid     chat.GID `json:"gid,omitempty"`
 		Name    string   `json:"name,omitempty"`
-		Age     int      `json:"age,omitempty"`
-		Gender  int      `json:"gender,omitempty"`
 		Icon    []byte   `json:"icon,omitempty"`
 		Comment string   `json:"comment,omitempty"`
+		// member info ----------------------------------
+		Age    int `json:"age,omitempty"`
+		Gender int `json:"gender,omitempty"`
 		// group info ----------------------------------
 		IsGroup      bool     `json:"isGroup,omitempty"`
-		GroupRoot    []byte   `json:"groupRoot,omitempty"`
+		GroupHash    []byte   `json:"groupHash,omitempty"`
 		GroupOwner   chat.JID `json:"groupOwner,omitempty"`
 		GroupMembers Members  `json:"groupMembers,omitempty"`
 	}
 )
 
-func (m Members) RootHash() []byte {
+func (m Members) Hash() []byte {
 	sort.Sort(m)
 	s1 := sha1.New()
 	for _, itm := range m {

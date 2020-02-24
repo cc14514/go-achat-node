@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"crypto/sha1"
 	"github.com/google/uuid"
 	"github.com/tendermint/go-amino"
 	"io"
@@ -78,7 +79,7 @@ type (
 		Type MsgType `json:"type"`
 		Ack  byte    `json:"ack,omitempty"`
 		Ct   int64   `json:"ct,omitempty"`
-		Gid  JID `json:"gid,omitempty"`
+		Gid  JID     `json:"gid,omitempty"`
 	}
 	Attr struct {
 		Key string `json:"key"`
@@ -208,6 +209,13 @@ func (c *Message) Bytes() []byte {
 	data, _ := amino.MarshalBinaryLengthPrefixed(c)
 	return data
 }
+
+func (c *Message) Hash() []byte {
+	s1 := sha1.New()
+	s1.Write(c.Bytes())
+	return s1.Sum(nil)
+}
+
 func (c *Message) FromJson(data []byte) (Msg, error) {
 	err := amino.UnmarshalJSON(data, c)
 	return c, err
