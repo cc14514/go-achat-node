@@ -15,19 +15,21 @@ import (
 
 // TODO 映射绑定关系即 jid + mailboxid ，接受指令时要验证 jid
 type mailbox struct {
+	myid       JID
 	ctx        context.Context
 	stop       chan struct{}
 	db         ldb.Database
 	p2pservice alibp2p.Libp2pService
 }
 
-func newMailbox(ctx context.Context, homedir string, p2pservice alibp2p.Libp2pService) *mailbox {
+func newMailbox(ctx context.Context, homedir string, myid JID, p2pservice alibp2p.Libp2pService) *mailbox {
 	db, err := ldb.NewLDBDatabase(path.Join(homedir, "mailbox"), 0, 0)
 	if err != nil {
 		panic(err)
 	}
 	return &mailbox{
 		ctx:        ctx,
+		myid:       myid,
 		stop:       make(chan struct{}),
 		db:         db,
 		p2pservice: p2pservice,

@@ -52,7 +52,7 @@ func NewChatService(ctx context.Context, myid JID, homedir string, p2pservice al
 		stop:        make(chan struct{}),
 		handleMsgFn: make(map[string]MsgHandle),
 		lock:        new(sync.Mutex),
-		mbox:        newMailbox(ctx, homedir, p2pservice),
+		mbox:        newMailbox(ctx, homedir, myid, p2pservice),
 	}
 }
 
@@ -158,4 +158,9 @@ func (c *ChatService) normalService() {
 		rw.Write(SUCCESS)
 		return nil
 	})
+}
+
+// group service ====================================================
+func (c *ChatService) CreateGroup(g *Group) (*GroupRsp, error) {
+	return c.mbox.genGroup(g)
 }

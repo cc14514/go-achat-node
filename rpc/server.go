@@ -123,6 +123,8 @@ var (
 
 func startService() {
 	serviceReg(NewUserService(chatservice))
+	serviceReg(NewGroupService(chatservice))
+
 }
 
 func StartRPC(_pwd string, _rpcport int, _chatservice *chat.ChatService) {
