@@ -57,6 +57,7 @@ var (
 opensession jid 打开一个会话，聊天
 myid 获取当前节点信息
 conns 获取当前网络连接信息
+group_create 创建群
 exit 退出 shell
 
 `
@@ -219,8 +220,14 @@ func AttachCmd(_ *cli.Context) error {
 						fmt.Println("bye bye ^_^ ")
 						return
 					}
-				case "myid", "conns":
-					rsp, err := callrpc(rpc.NewReq(token, cmdArg[0], nil))
+				case "myid", "conns", "group_create", "user_query":
+					var params []interface{}
+					if len(cmdArg) > 1 {
+						for _, p := range cmdArg[1:] {
+							params = append(params, p)
+						}
+					}
+					rsp, err := callrpc(rpc.NewReq(token, cmdArg[0], params))
 					if err != nil {
 						fmt.Println("error:", err)
 					} else if rsp.Error != nil {

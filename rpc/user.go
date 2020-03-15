@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"errors"
 	"fmt"
 	chat "github.com/cc14514/go-alibp2p-chat"
 	"github.com/cc14514/go-alibp2p-chat/ldb"
@@ -21,10 +22,15 @@ func NewUserService(chatservice *chat.ChatService) Service {
 }
 
 func (u *UserService) put(user *User) error {
-	return u.db.Put([]byte(user.Id.Peerid()), user.Bytes())
+	if user.Id != "" {
+		return u.db.Put([]byte(user.Id.Peerid()), user.Bytes())
+	} else if user.Gid != "" {
+		return u.db.Put([]byte(user.Gid), user.Bytes())
+	}
+	return errors.New("id can not be nil")
 }
 
-func (u *UserService) get(id chat.JID) (*User, error) {
+func (u *UserService) get(id string) (*User, error) {
 	d, err := u.db.Get([]byte(id))
 	if err != nil {
 		return nil, err
@@ -32,7 +38,7 @@ func (u *UserService) get(id chat.JID) (*User, error) {
 	return new(User).FromBytes(d)
 }
 
-func (u *UserService) del(id chat.JID) error {
+func (u *UserService) del(id string) error {
 	err := u.db.Delete([]byte(id))
 	if err != nil {
 		return err
@@ -68,8 +74,8 @@ func (u *UserService) Put(req *Req) *Rsp {
 	if err != nil {
 		return NewRsp(req.Id, nil, &RspError{Code: "10001", Message: err.Error()})
 	}
-	if user.Id == "" {
-		return NewRsp(req.Id, nil, &RspError{Code: "10002", Message: "userid not nil"})
+	if user.Id == "" && user.Gid == "" {
+		return NewRsp(req.Id, nil, &RspError{Code: "10002", Message: "userid / groupid not nil"})
 	}
 	if err = u.put(user); err != nil {
 		return NewRsp(req.Id, nil, &RspError{Code: "10003", Message: err.Error()})
@@ -82,9 +88,9 @@ func (u *UserService) Put(req *Req) *Rsp {
 func (u *UserService) Get(req *Req) *Rsp {
 	fmt.Println("user.get -->", req)
 	if len(req.Params) < 1 {
-		return NewRsp(req.Id, nil, &RspError{Code: "20001", Message: "userid not nil"})
+		return NewRsp(req.Id, nil, &RspError{Code: "20001", Message: "userid / groupid not nil"})
 	}
-	user, err := u.get(chat.JID(req.Params[0].(string)))
+	user, err := u.get(req.Params[0].(string))
 	if err != nil {
 		return NewRsp(req.Id, nil, &RspError{Code: "20002", Message: err.Error()})
 	}
@@ -96,9 +102,9 @@ func (u *UserService) Get(req *Req) *Rsp {
 func (u *UserService) Del(req *Req) *Rsp {
 	fmt.Println("user.del -->", req)
 	if len(req.Params) < 1 {
-		return NewRsp(req.Id, nil, &RspError{Code: "30001", Message: "userid not nil"})
+		return NewRsp(req.Id, nil, &RspError{Code: "30001", Message: "userid / groupid not nil"})
 	}
-	err := u.del(chat.JID(req.Params[0].(string)))
+	err := u.del(req.Params[0].(string))
 	if err != nil {
 		return NewRsp(req.Id, nil, &RspError{Code: "30002", Message: err.Error()})
 	}

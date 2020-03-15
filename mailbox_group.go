@@ -395,15 +395,20 @@ func (m *mailbox) groupService() {
 		}
 
 		myid, _ := alibp2p.ECDSAPubEncode(pubkey)
-		req.Owner.Id = JID(myid)
+		req.Owner = &GroupMember{Id: JID(myid)}
 		err = gdb.saveGroup(req)
 		if err != nil {
 			resp(rw, GroupRsp{Err: err.Error()})
 			log.Println("PID_MAILBOX_GROUP_UPDATE-error-3", "session", sessionId, "err", err)
 			return err
 		}
-
-		resp(rw, GroupRsp{Group: req})
+		g, err := gdb.getGroup(req.Id)
+		if err != nil {
+			resp(rw, GroupRsp{Err: err.Error()})
+			log.Println("PID_MAILBOX_GROUP_UPDATE-error-4", "session", sessionId, "err", err)
+			return err
+		}
+		resp(rw, GroupRsp{Group: g})
 		log.Println("PID_MAILBOX_GROUP_UPDATE-end", "session", sessionId, "err", err)
 		return err
 	})

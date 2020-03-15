@@ -82,6 +82,7 @@ func (m *mailbox) Start() error {
 	m.queryService()
 	m.msgService()
 	m.cleanService()
+	m.groupService()
 	return nil
 }
 

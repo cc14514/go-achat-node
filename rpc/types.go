@@ -62,19 +62,18 @@ type (
 
 	User struct {
 		// common info
-		Id      chat.JID `json:"id,omitempty"`
-		Gid     chat.GID `json:"gid,omitempty"`
-		Name    string   `json:"name,omitempty"`
-		Icon    []byte   `json:"icon,omitempty"`
-		Comment string   `json:"comment,omitempty"`
+		Name    string `json:"name,omitempty"`
+		Icon    []byte `json:"icon,omitempty"`
+		Comment string `json:"comment,omitempty"`
 		// member info ----------------------------------
-		Age    int `json:"age,omitempty"`
-		Gender int `json:"gender,omitempty"`
+		Id     chat.JID `json:"id,omitempty"`
+		Age    int      `json:"age,omitempty"`
+		Gender int      `json:"gender,omitempty"`
 		// group info ----------------------------------
-		IsGroup      bool     `json:"isGroup,omitempty"`
-		GroupHash    []byte   `json:"groupHash,omitempty"`
-		GroupOwner   chat.JID `json:"groupOwner,omitempty"`
-		GroupMembers Members  `json:"groupMembers,omitempty"`
+		Gid     chat.GID `json:"gid,omitempty"`
+		Lastlog string   `json:"lastlog,omitempty"`
+		// GroupOwner   chat.JID `json:"groupOwner,omitempty"`
+		// GroupMembers Members  `json:"groupMembers,omitempty"`
 	}
 )
 

@@ -81,7 +81,20 @@ func (g GroupService) Create(req *Req) *Rsp {
 		})
 	}
 	fmt.Println("group.create <--", err, rsp)
+
+	if putFn := getRpcFn("user_put"); putFn != nil {
+		putReq := &Req{Params: []interface{}{
+			map[string]interface{}{
+				"gid":     grsp.Group.Id,
+				"name":    grsp.Group.Name,
+				"comment": grsp.Group.Comment,
+				"lastlog": grsp.Group.Lastlog,
+			},
+		}}
+		putFn(putReq)
+	}
 	return rsp
+
 }
 
 func (g GroupService) APIs() *API {

@@ -105,7 +105,7 @@ func init() {
 				fmt.Println("rpcport", rpcport)
 				fmt.Println("homedir", homedir)
 				go achat(ctx)
-				<-time.After(time.Second)
+				<-time.After(2 * time.Second)
 				return AttachCmd(ctx)
 			},
 		},
