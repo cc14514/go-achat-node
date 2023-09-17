@@ -1,6 +1,6 @@
 module achat
 
-go 1.13
+go 1.19
 
 require (
 	github.com/cc14514/go-alibp2p v0.0.3-rc5

@@ -36,6 +36,17 @@ var (
 		}
 		return nil
 	}
+	dedup = func(arr []string) []string {
+		set := make(map[string]struct{})
+		for _, str := range arr {
+			set[str] = struct{}{}
+		}
+		uniqueSlice := make([]string, 0, len(set))
+		for str := range set {
+			uniqueSlice = append(uniqueSlice, str)
+		}
+		return uniqueSlice
+	}
 	fnReg = map[string]RpcFn{
 		"auth": func(req *Req) *Rsp {
 			if pwd == "" || (len(req.Params) == 1 && req.Params[0] == pwd) {
@@ -84,7 +95,8 @@ var (
 			rpis := make(map[string][]Peerinfo)
 			for rid, ids := range relay {
 				pis := make([]Peerinfo, 0)
-				for _, id := range ids {
+				// TODO : ids 有重复的，这里的数组要改成 set 集合去一次重
+				for _, id := range dedup(ids) {
 					if addrs, err := p2pservice.Findpeer(id); err == nil {
 						pis = append(pis, Peerinfo{id, addrs})
 					}

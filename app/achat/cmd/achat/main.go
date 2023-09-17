@@ -16,8 +16,7 @@ import (
 )
 
 var DEFBOOTNODES = []string{
-	"/ip4/101.251.230.218/tcp/23002/ipfs/16Uiu2HAmA4VaVDeauGN2vymtMsa4V15pMDquMudTBR9U51PaTP37",
-	"/ip4/101.251.230.218/tcp/23001/ipfs/16Uiu2HAmCkfrmfrKuW85EGAc4uRDDB1o7MrdDAZow9Nau8tpJgD6",
+	"/ip4/82.157.104.202/tcp/24000/p2p/16Uiu2HAmThtRghjg2k2fK1Zau5GW1svxrc2RXuNk5wwGnwA9juUT",
 }
 
 var (
@@ -109,6 +108,14 @@ func init() {
 				return AttachCmd(ctx)
 			},
 		},
+		{
+			Name:  "bootnode",
+			Usage: "start as a bootnode",
+			Action: func(ctx *cli.Context) error {
+				nodiscover = true
+				return achat(ctx)
+			},
+		},
 	}
 
 	app.Before = func(ctx *cli.Context) error {
@@ -128,11 +135,16 @@ func achat(_ *cli.Context) error {
 		Port:      uint64(port),
 		Discover:  !nodiscover,
 		Networkid: big.NewInt(int64(networkid)),
+		Loglevel:  4, // 3 INFO, 4 DEBUG, 5 TRACE -> 3-4 INFO, 5 DEBUG
 		Bootnodes: DEFBOOTNODES,
+		Relay:     true,
 	}
 	if bootnodes != "" {
 		log.Println("bootnodes=", bootnodes)
 		cfg.Bootnodes = strings.Split(bootnodes, ",")
+	}
+	if nodiscover {
+		cfg.Bootnodes = nil
 	}
 	if muxport > 0 {
 		cfg.MuxPort = big.NewInt(int64(muxport))
@@ -150,6 +162,7 @@ func achat(_ *cli.Context) error {
 
 	chatservice.Start()
 	log.Println(">> Action on port =", port)
+	log.Println(">> myid =", myid)
 	rpc.StartRPC(pwd, rpcport, chatservice)
 	return nil
 }
