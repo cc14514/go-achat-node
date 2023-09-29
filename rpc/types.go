@@ -5,7 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	chat "github.com/cc14514/go-alibp2p-chat"
+	chat "github.com/cc14514/go-achat-node"
 	"github.com/google/uuid"
 	"github.com/tendermint/go-amino"
 	"io"

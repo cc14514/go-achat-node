@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	chat "github.com/cc14514/go-achat-node"
+	"github.com/cc14514/go-achat-node/rpc"
 	"github.com/cc14514/go-alibp2p"
-	chat "github.com/cc14514/go-alibp2p-chat"
-	"github.com/cc14514/go-alibp2p-chat/rpc"
 	"github.com/urfave/cli"
 	"log"
 	"math/big"
@@ -17,6 +17,7 @@ import (
 
 var DEFBOOTNODES = []string{
 	"/ip4/82.157.104.202/tcp/24000/p2p/16Uiu2HAmThtRghjg2k2fK1Zau5GW1svxrc2RXuNk5wwGnwA9juUT",
+	"/ip4/39.105.35.133/tcp/24000/p2p/16Uiu2HAmUudavpi7V1FUxWoLhXTGJ4i38ZMhAuL2Tc9LPCz8EzZa",
 }
 
 var (

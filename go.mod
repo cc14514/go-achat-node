@@ -1,4 +1,4 @@
-module github.com/cc14514/go-alibp2p-chat
+module github.com/cc14514/go-achat-node
 
 go 1.19
 

@@ -5,15 +5,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/cc14514/go-alibp2p-chat"
+	"github.com/cc14514/go-achat-node"
+	"golang.org/x/net/websocket"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"golang.org/x/net/websocket"
 )
 
 var (

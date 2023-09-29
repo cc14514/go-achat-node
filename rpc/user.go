@@ -3,8 +3,8 @@ package rpc
 import (
 	"errors"
 	"fmt"
-	chat "github.com/cc14514/go-alibp2p-chat"
-	"github.com/cc14514/go-alibp2p-chat/ldb"
+	chat "github.com/cc14514/go-achat-node"
+	"github.com/cc14514/go-achat-node/ldb"
 	"path"
 )
 

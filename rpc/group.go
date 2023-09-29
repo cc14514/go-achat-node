@@ -23,8 +23,8 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
-	chat "github.com/cc14514/go-alibp2p-chat"
-	"github.com/cc14514/go-alibp2p-chat/ldb"
+	chat "github.com/cc14514/go-achat-node"
+	"github.com/cc14514/go-achat-node/ldb"
 	"github.com/tendermint/go-amino"
 	"path"
 )
