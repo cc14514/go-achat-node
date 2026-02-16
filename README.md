@@ -45,6 +45,36 @@ GLOBAL OPTIONS:
 
 子命令 `console` 可以在调试时得到一个 `shell` ，也可以单独启动节点进程并以 `attach` 子命令登陆节点 `shell` 进行交互
 
+## 编译（Makefile）
+
+本仓库提供 `Makefile` 用于标准化构建与 Docker 镜像产出。
+
+### 编译二进制
+
+在仓库根目录执行：
+
+```bash
+make build
+```
+
+产物：`dist/achat`
+
+### 构建 Docker 镜像
+
+```bash
+make docker TAG=dev IMAGE=achat
+```
+
+### 多架构构建并推送镜像
+
+需要 Docker Buildx。默认平台：`linux/amd64,linux/arm64`。
+
+```bash
+make docker-push IMAGE_REPO=ghcr.io/<org-or-user>/achat TAG=v0.0.1
+```
+
+如果未指定 `IMAGE_REPO`，`make docker-push` 会直接报错退出。
+
 
 ## RPC接口
 

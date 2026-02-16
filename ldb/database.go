@@ -120,7 +120,7 @@ func (db *LDBDatabase) Close() {
 		errc := make(chan error)
 		db.quitChan <- errc
 		if err := <-errc; err != nil {
-			log.Println("Metrics collection failed err=%v", err)
+			log.Printf("Metrics collection failed err=%v", err)
 		}
 	}
 	db.db.Close()

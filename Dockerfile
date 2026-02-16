@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.7
 
-FROM --platform=$BUILDPLATFORM golang:1.19-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS builder
 
 RUN apk add --no-cache ca-certificates git
 
@@ -11,7 +11,11 @@ COPY go.mod go.sum ./
 COPY app/achat/go.mod ./app/achat/go.mod
 
 WORKDIR /src/go-achat-node/app/achat
-RUN go mod download
+ARG GOPROXY
+ENV GOPROXY=${GOPROXY}
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
 # Copy full source and build.
 WORKDIR /src/go-achat-node
@@ -20,7 +24,9 @@ COPY . .
 WORKDIR /src/go-achat-node/app/achat
 ARG TARGETOS
 ARG TARGETARCH
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -trimpath -ldflags "-s -w" -o /out/achat ./cmd/achat
 
 
