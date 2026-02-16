@@ -297,6 +297,10 @@ __响应：__
 }
 ```
 
+## License
+
+Apache-2.0. See `LICENSE`.
+
 返回
 
 ```

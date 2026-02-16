@@ -10,8 +10,8 @@
 
 仓库包含两部分：
 
-- 根目录：核心库（Go module：`github.com/cc14514/go-achat-node`，Go 1.19）
-- `app/achat`：示例/参考用的节点可执行程序（Go module：`achat`，Go 1.19，提供 CLI、console、attach）
+- 根目录：核心库（Go module：`github.com/cc14514/go-achat-node`，Go 1.22）
+- `app/achat`：示例/参考用的节点可执行程序（Go module：`achat`，Go 1.22，提供 CLI、console、attach）
 
 ## 2. 架构说明
 
@@ -96,7 +96,7 @@ go-achat-node/
 
 ### 4.1 运行时依赖
 
-- Go：`1.19`
+- Go：`1.22`
 - LevelDB：通过 `goleveldb` 使用本地文件存储（不需要外置数据库）
 - 网络：需要能够进行 libp2p 连接（NAT/防火墙会影响直连效果）
 

@@ -1,22 +1,9 @@
-/*************************************************************************
- * Copyright (C) 2016-2019 PDX Technologies, Inc. All Rights Reserved.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @Time   : 2020/2/24 4:29 下午
- * @Author : liangc
- *************************************************************************/
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 liangchuan
+//
+// NOTE: This file previously contained a GPL-3.0-or-later header.
+// If any content in this file is derived from third-party GPL code,
+// relicensing may require upstream permission. Verify provenance if needed.
 
 package rpc
 

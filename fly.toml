@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for go-achat-node on 2026-02-16T18:25:28+08:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "go-achat-node"
+primary_region = "sin"
+
+[build]
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 24000
+
+  [[services.ports]]
+    port = 24000
+
+[[vm]]
+  memory = "1gb"
+  cpus = 1
+

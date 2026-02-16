@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 liangchuan
+
 package chat
 
 import (
@@ -57,7 +60,7 @@ const MAX_PKG = 2048
   }
 */
 
-//omitempty
+// omitempty
 type (
 	Msg interface {
 		FromBytes(data []byte) (Msg, error)

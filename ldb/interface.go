@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 liangchuan
+
 package ldb
 
 import "github.com/syndtr/goleveldb/leveldb/iterator"

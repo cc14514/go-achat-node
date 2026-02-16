@@ -1,11 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 liangchuan
+
 package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	chat "github.com/cc14514/go-achat-node"
 	"github.com/cc14514/go-achat-node/rpc"
 	"github.com/cc14514/go-alibp2p"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/urfave/cli"
 	"log"
 	"math/big"
@@ -14,6 +20,49 @@ import (
 	"sync"
 	"time"
 )
+
+func init() {
+	// Consistent, timestamped logs help when correlating with libp2p/zap output.
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.LUTC)
+}
+
+func pskFingerprint(networkID *big.Int) string {
+	if networkID == nil {
+		return ""
+	}
+	sum := sha256.Sum256(networkID.Bytes())
+	// Print a short, stable identifier; avoid dumping full material.
+	return hex.EncodeToString(sum[:])[:12]
+}
+
+func logMultiaddrs(label string, addrs []ma.Multiaddr) {
+	if len(addrs) == 0 {
+		log.Printf("achat: %s.count=0", label)
+		return
+	}
+	log.Printf("achat: %s.count=%d", label, len(addrs))
+	for i, a := range addrs {
+		if a == nil {
+			continue
+		}
+		log.Printf("achat: %s[%d]=%s", label, i, a.String())
+	}
+}
+
+func logStrings(label string, ss []string) {
+	if len(ss) == 0 {
+		log.Printf("achat: %s.count=0", label)
+		return
+	}
+	log.Printf("achat: %s.count=%d", label, len(ss))
+	for i, s := range ss {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		log.Printf("achat: %s[%d]=%s", label, i, s)
+	}
+}
 
 var DEFBOOTNODES = []string{
 	"/ip4/82.157.104.202/tcp/24000/p2p/16Uiu2HAmThtRghjg2k2fK1Zau5GW1svxrc2RXuNk5wwGnwA9juUT",
@@ -140,13 +189,19 @@ func achat(_ *cli.Context) error {
 		Bootnodes: DEFBOOTNODES,
 		Relay:     true,
 	}
+	log.Printf(
+		"achat: cfg homedir=%s port=%d rpcport=%d networkid=%s psk_fp=%s discover=%t relay=%t nodiscover=%t",
+		homedir, port, rpcport, cfg.Networkid.String(), pskFingerprint(cfg.Networkid), cfg.Discover, cfg.Relay, nodiscover,
+	)
 	if bootnodes != "" {
-		log.Println("bootnodes=", bootnodes)
+		log.Printf("achat: flag.bootnodes=%s", bootnodes)
 		cfg.Bootnodes = strings.Split(bootnodes, ",")
 	}
 	if nodiscover {
+		log.Printf("achat: nodiscover=true; clearing bootnodes")
 		cfg.Bootnodes = nil
 	}
+	logStrings("cfg.bootnodes", cfg.Bootnodes)
 	if muxport > 0 {
 		cfg.MuxPort = big.NewInt(int64(muxport))
 	}
@@ -154,6 +209,8 @@ func achat(_ *cli.Context) error {
 	b := a.(*alibp2p.Service)
 	p2pservice = b
 	p2pservice.Start()
+	logMultiaddrs("host.listen_addrs", b.Host().Network().ListenAddresses())
+	logMultiaddrs("host.addrs", b.Host().Addrs())
 	myid, _ := p2pservice.Myid()
 	chatservice = chat.NewChatService(_ctx, chat.NewJID(myid, mailbox), homedir, p2pservice)
 	chatservice.AppendHandleMsg(func(service *chat.ChatService, msg *chat.Message) {
